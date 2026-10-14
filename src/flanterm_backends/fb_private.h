@@ -78,7 +78,6 @@ struct flanterm_fb_context {
     size_t width;
     size_t height;
     size_t phys_height;
-    size_t bpp;
 
     uint8_t red_mask_size, red_mask_shift;
     uint8_t green_mask_size, green_mask_shift;
