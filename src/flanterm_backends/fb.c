@@ -1185,14 +1185,17 @@ static void flanterm_fb_full_refresh(struct flanterm_context *_ctx) {
 static void flanterm_fb_deinit(struct flanterm_context *_ctx, void (*_free)(void *, size_t)) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
-    if (_free == NULL) {
 #ifndef FLANTERM_FB_DISABLE_BUMP_ALLOC
-        if (bump_allocated_instance == true) {
-            bump_alloc_ptr = 0;
-            bump_alloc_base_offset_added = false;
-            bump_allocated_instance = false;
-        }
+    if ((uintptr_t)ctx >= (uintptr_t)bump_alloc_pool
+     && (uintptr_t)ctx < (uintptr_t)bump_alloc_pool + sizeof(bump_alloc_pool)) {
+        bump_alloc_ptr = 0;
+        bump_alloc_base_offset_added = false;
+        bump_allocated_instance = false;
+        return;
+    }
 #endif
+
+    if (_free == NULL) {
         return;
     }
 
@@ -1279,7 +1282,7 @@ struct flanterm_context *flanterm_fb_init(
 
     if (_malloc == NULL) {
 #ifndef FLANTERM_FB_DISABLE_BUMP_ALLOC
-        if (bump_allocated_instance == true) {
+        if (_free != NULL || bump_allocated_instance == true) {
             return NULL;
         }
         _malloc = bump_alloc;

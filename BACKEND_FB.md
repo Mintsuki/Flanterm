@@ -42,7 +42,7 @@ invalid framebuffer geometry, unsupported pixel format, etc.).
 
 | Parameter | Meaning |
 | --- | --- |
-| `_malloc`, `_free` | Client allocator. If both are `NULL`, the built-in bump allocator is used (only one live instance at a time; see [below](#allocator-and-the-built-in-bump-allocator)). |
+| `_malloc`, `_free` | Client allocator. If both are `NULL`, the built-in bump allocator is used (only one live instance at a time; see [below](#allocator-and-the-built-in-bump-allocator)). `_free` must be `NULL` when `_malloc` is. |
 | `framebuffer` | The 32-bit framebuffer, writable as `uint32_t *`. |
 | `width`, `height` | Physical framebuffer dimensions in pixels. Swapped internally for `ROTATE_90`/`ROTATE_270` (see [Rotation](#rotation)). |
 | `pitch` | Physical scanline stride in bytes. Must be a multiple of `sizeof(uint32_t)` and at least `width * 4`. |
