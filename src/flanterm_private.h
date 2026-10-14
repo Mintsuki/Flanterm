@@ -55,6 +55,7 @@ struct flanterm_context {
     bool escape;
     bool osc;
     bool osc_escape;
+    bool osc_overflow;
     size_t osc_buf_i;
     uint8_t osc_buf[256];
     bool rrr;

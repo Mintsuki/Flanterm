@@ -538,7 +538,7 @@ static void mode_toggle(struct flanterm_context *ctx, uint8_t c) {
 }
 
 static void osc_finalize(struct flanterm_context *ctx) {
-    if (ctx->callback != NULL) {
+    if (ctx->callback != NULL && !ctx->osc_overflow) {
         // Parse the leading OSC number and skip past the semicolon.
         uint64_t osc_num = 0;
         size_t i = 0;
@@ -595,6 +595,8 @@ static bool osc_parse(struct flanterm_context *ctx, uint8_t c) {
         default:
             if (ctx->osc_buf_i < sizeof(ctx->osc_buf)) {
                 ctx->osc_buf[ctx->osc_buf_i++] = c;
+            } else {
+                ctx->osc_overflow = true;
             }
             break;
     }
@@ -1142,6 +1144,7 @@ static void escape_parse(struct flanterm_context *ctx, uint8_t c) {
             ctx->osc_escape = false;
             ctx->osc = true;
             ctx->osc_buf_i = 0;
+            ctx->osc_overflow = false;
             return;
         case '[':
             for (size_t i = 0; i < FLANTERM_MAX_ESC_VALUES; i++)
