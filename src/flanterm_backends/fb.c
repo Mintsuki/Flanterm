@@ -1041,7 +1041,7 @@ static void flanterm_fb_set_text_bg_default_bright(struct flanterm_context *_ctx
     ctx->text_bg_default = false;
 }
 
-static void draw_cursor(struct flanterm_context *_ctx) {
+static void draw_cursor(struct flanterm_context *_ctx, bool from_queue) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
     if (ctx->cursor_x >= _ctx->cols || ctx->cursor_y >= _ctx->rows) {
@@ -1051,7 +1051,7 @@ static void draw_cursor(struct flanterm_context *_ctx) {
     size_t i = ctx->cursor_x + ctx->cursor_y * _ctx->cols;
 
     struct flanterm_fb_char c;
-    struct flanterm_fb_queue_item *q = ctx->map[i];
+    struct flanterm_fb_queue_item *q = from_queue ? ctx->map[i] : NULL;
     if (q != NULL) {
         c = q->c;
     } else {
@@ -1080,7 +1080,7 @@ static void flanterm_fb_double_buffer_flush(struct flanterm_context *_ctx) {
     }
 
     if (_ctx->cursor_enabled) {
-        draw_cursor(_ctx);
+        draw_cursor(_ctx, true);
     }
 
     for (size_t i = 0; i < ctx->queue_i; i++) {
@@ -1179,8 +1179,11 @@ static void flanterm_fb_full_refresh(struct flanterm_context *_ctx) {
         ctx->plot_char(_ctx, &ctx->grid[i], x, y);
     }
 
+    // Pending cells stay queued; record the cursor so the next flush can erase it.
     if (_ctx->cursor_enabled) {
-        draw_cursor(_ctx);
+        draw_cursor(_ctx, false);
+        ctx->old_cursor_x = ctx->cursor_x;
+        ctx->old_cursor_y = ctx->cursor_y;
     }
 
     if (ctx->flush_callback) {
