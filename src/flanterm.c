@@ -1157,16 +1157,20 @@ static void escape_parse(struct flanterm_context *ctx, uint8_t c) {
         case '8':
             restore_state(ctx);
             break;
-        case 'c':
+        case 'c': {
+            // autoflush is host configuration, not terminal state.
+            bool autoflush = ctx->autoflush;
             if (ctx->reverse_video) {
                 ctx->swap_palette(ctx);
             }
             flanterm_context_reinit(ctx);
+            ctx->autoflush = autoflush;
             ctx->set_text_bg_default(ctx);
             ctx->set_text_fg_default(ctx);
             ctx->clear(ctx, true);
             save_state(ctx);
             break;
+        }
         case 'D':
             if (y == ctx->scroll_bottom_margin - 1) {
                 ctx->scroll(ctx, 1);
