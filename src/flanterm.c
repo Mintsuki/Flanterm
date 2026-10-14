@@ -29,7 +29,7 @@
 #error "Please do not compile Flanterm as C++ code! Flanterm should be compiled as C99 or newer."
 #endif
 
-#ifndef __STDC_VERSION__
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
 #error "Flanterm must be compiled as C99 or newer."
 #endif
 
