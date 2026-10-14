@@ -830,7 +830,7 @@ static void control_sequence_parse(struct flanterm_context *ctx, uint8_t c) {
             // FALLTHRU
         case 'e':
         case 'B': {
-            if (y + ctx->esc_values[0] > ctx->rows - 1)
+            if (ctx->esc_values[0] > (ctx->rows - 1) - y)
                 ctx->esc_values[0] = (ctx->rows - 1) - y;
             size_t dest_y = y + ctx->esc_values[0];
             size_t max_y = ctx->origin_mode ? ctx->scroll_bottom_margin : ctx->rows;
@@ -842,7 +842,7 @@ static void control_sequence_parse(struct flanterm_context *ctx, uint8_t c) {
         }
         case 'a':
         case 'C':
-            if (x + ctx->esc_values[0] > ctx->cols - 1)
+            if (ctx->esc_values[0] > (ctx->cols - 1) - x)
                 ctx->esc_values[0] = (ctx->cols - 1) - x;
             ctx->set_cursor_pos(ctx, x + ctx->esc_values[0], y);
             break;
