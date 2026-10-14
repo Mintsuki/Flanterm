@@ -1198,6 +1198,7 @@ static void escape_parse(struct flanterm_context *ctx, uint8_t c) {
             ctx->esc_values_i = 0;
             ctx->rrr = false;
             ctx->csi_unhandled = false;
+            ctx->dec_private = false;
             ctx->control_sequence = true;
             return;
         case '7':
