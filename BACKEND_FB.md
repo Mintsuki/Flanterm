@@ -99,9 +99,9 @@ mode:
 - The canvas is forced off.
 - Logical-dimension limits are derived from the pool size as the largest
   `FLANTERM_FB_BUMP_ALLOC_ASPECT_WIDTH:FLANTERM_FB_BUMP_ALLOC_ASPECT_HEIGHT`
-  rectangle (default 16:10) that fits assuming the built-in 8x16 font.
-  Framebuffers exceeding those limits have the usable area clipped and
-  centred.
+  rectangle (default 16:10) that fits assuming the built-in 8x16 font,
+  multiplied by the font scale. Framebuffers exceeding those limits have the
+  usable area clipped and centred.
 
 With a custom allocator, `_malloc` is used for every allocation and the
 paired `_free` runs when freeing. `_free` receives the allocation

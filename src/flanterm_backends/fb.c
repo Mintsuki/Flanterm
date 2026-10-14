@@ -1307,6 +1307,9 @@ struct flanterm_context *flanterm_fb_init(
         // Limit terminal size if needed
         size_t fb_width_limit, fb_height_limit;
         bump_pool_limits(&fb_width_limit, &fb_height_limit);
+        // Scaled cells are larger, so the same number of them covers more pixels.
+        fb_width_limit *= font_scale_x;
+        fb_height_limit *= font_scale_y;
         if (width > fb_width_limit || height > fb_height_limit) {
             size_t width_limit = width > fb_width_limit ? fb_width_limit : width;
             size_t height_limit = height > fb_height_limit ? fb_height_limit : height;
