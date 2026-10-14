@@ -94,6 +94,11 @@ static void *bump_alloc(size_t s) {
         bump_alloc_base_offset_added = true;
     }
 
+    // Keeps the rounding and the addition below from overflowing.
+    if (s > FLANTERM_FB_BUMP_ALLOC_POOL_SIZE) {
+        return NULL;
+    }
+
     if ((s & 0xf) != 0) {
         s += 0x10;
         s &= ~(size_t)0xf;
