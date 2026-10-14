@@ -1070,13 +1070,13 @@ static void draw_cursor(struct flanterm_context *_ctx, bool from_queue) {
     }
 }
 
-static void flanterm_fb_full_refresh(struct flanterm_context *_ctx);
+static void full_refresh(struct flanterm_context *_ctx);
 
 static void flanterm_fb_double_buffer_flush(struct flanterm_context *_ctx) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
     if (ctx->full_refresh_pending) {
-        flanterm_fb_full_refresh(_ctx);
+        full_refresh(_ctx);
     }
 
     if (_ctx->cursor_enabled) {
@@ -1141,7 +1141,7 @@ static void flanterm_fb_raw_putchar(struct flanterm_context *_ctx, uint8_t c) {
     push_to_queue(_ctx, &ch, ctx->cursor_x++, ctx->cursor_y);
 }
 
-static void flanterm_fb_full_refresh(struct flanterm_context *_ctx) {
+static void full_refresh(struct flanterm_context *_ctx) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
     ctx->full_refresh_pending = false;
@@ -1187,6 +1187,12 @@ static void flanterm_fb_full_refresh(struct flanterm_context *_ctx) {
         draw_cursor(_ctx, false);
         flanterm_fb_get_cursor_pos(_ctx, &ctx->old_cursor_x, &ctx->old_cursor_y);
     }
+}
+
+static void flanterm_fb_full_refresh(struct flanterm_context *_ctx) {
+    struct flanterm_fb_context *ctx = (void *)_ctx;
+
+    full_refresh(_ctx);
 
     if (ctx->flush_callback) {
         ctx->flush_callback(ctx->phys_framebuffer, ctx->pitch * ctx->phys_height);
