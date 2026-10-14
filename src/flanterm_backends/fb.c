@@ -1044,11 +1044,11 @@ static void flanterm_fb_set_text_bg_default_bright(struct flanterm_context *_ctx
 static void draw_cursor(struct flanterm_context *_ctx, bool from_queue) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
-    if (ctx->cursor_x >= _ctx->cols || ctx->cursor_y >= _ctx->rows) {
-        return;
-    }
+    // A pending wrap (cursor_x == cols) shows the cursor on the last column.
+    size_t x, y;
+    flanterm_fb_get_cursor_pos(_ctx, &x, &y);
 
-    size_t i = ctx->cursor_x + ctx->cursor_y * _ctx->cols;
+    size_t i = x + y * _ctx->cols;
 
     struct flanterm_fb_char c;
     struct flanterm_fb_queue_item *q = from_queue ? ctx->map[i] : NULL;
@@ -1063,7 +1063,7 @@ static void draw_cursor(struct flanterm_context *_ctx, bool from_queue) {
     bool tmp_default = c.fg_default;
     c.fg_default = c.bg_default;
     c.bg_default = tmp_default;
-    ctx->plot_char(_ctx, &c, ctx->cursor_x, ctx->cursor_y);
+    ctx->plot_char(_ctx, &c, x, y);
     if (q != NULL) {
         ctx->grid[i] = q->c;
         ctx->map[i] = NULL;
@@ -1094,14 +1094,17 @@ static void flanterm_fb_double_buffer_flush(struct flanterm_context *_ctx) {
         ctx->map[offset] = NULL;
     }
 
-    if ((ctx->old_cursor_x != ctx->cursor_x || ctx->old_cursor_y != ctx->cursor_y) || _ctx->cursor_enabled == false) {
+    size_t x, y;
+    flanterm_fb_get_cursor_pos(_ctx, &x, &y);
+
+    if ((ctx->old_cursor_x != x || ctx->old_cursor_y != y) || _ctx->cursor_enabled == false) {
         if (ctx->old_cursor_x < _ctx->cols && ctx->old_cursor_y < _ctx->rows) {
             ctx->plot_char(_ctx, &ctx->grid[ctx->old_cursor_x + ctx->old_cursor_y * _ctx->cols], ctx->old_cursor_x, ctx->old_cursor_y);
         }
     }
 
-    ctx->old_cursor_x = ctx->cursor_x;
-    ctx->old_cursor_y = ctx->cursor_y;
+    ctx->old_cursor_x = x;
+    ctx->old_cursor_y = y;
 
     ctx->queue_i = 0;
 
@@ -1182,8 +1185,7 @@ static void flanterm_fb_full_refresh(struct flanterm_context *_ctx) {
     // Pending cells stay queued; record the cursor so the next flush can erase it.
     if (_ctx->cursor_enabled) {
         draw_cursor(_ctx, false);
-        ctx->old_cursor_x = ctx->cursor_x;
-        ctx->old_cursor_y = ctx->cursor_y;
+        flanterm_fb_get_cursor_pos(_ctx, &ctx->old_cursor_x, &ctx->old_cursor_y);
     }
 
     if (ctx->flush_callback) {
