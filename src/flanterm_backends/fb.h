@@ -63,7 +63,7 @@ struct flanterm_context *flanterm_fb_init(
     uint32_t *default_bg_bright, uint32_t *default_fg_bright, /* If nulled, default. */
     /* If font is null, use default font and font_width and font_height ignored. */
     void *font, size_t font_width, size_t font_height, size_t font_spacing,
-    /* If scale_x and scale_y are 0, automatically scale font based on resolution. */
+    /* If scale_x or scale_y is 0, automatically scale font based on resolution. */
     size_t font_scale_x, size_t font_scale_y,
     size_t margin,
     /* One of FLANTERM_FB_ROTATE_* values. */

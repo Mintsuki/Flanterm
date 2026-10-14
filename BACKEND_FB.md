@@ -56,7 +56,7 @@ invalid framebuffer geometry, unsupported pixel format, etc.).
 | `font` | Optional VGA-style bitmap font (one byte per scanline, 256 consecutive glyphs). `NULL` uses the built-in 8x16 font. |
 | `font_width`, `font_height` | Glyph dimensions when `font` is non-`NULL`. `font_width` must be at least 8. See [Fonts](#fonts). |
 | `font_spacing` | Extra pixels after each glyph; see [Fonts](#fonts). |
-| `font_scale_x`, `font_scale_y` | Integer glyph scale. `0`, `0` enables auto-scale: `2x` at logical dimensions >= 2560x1440, `4x` at >= 5120x2880. |
+| `font_scale_x`, `font_scale_y` | Integer glyph scale. `0` for either enables auto-scale for both: `2x` at logical dimensions >= 2560x1440, `4x` at >= 5120x2880. |
 | `margin` | Margin pixels on each side of the text area. `margin * 2 < logical_width` and `margin * 2 < logical_height` must hold, or init fails. |
 | `rotation` | One of `FLANTERM_FB_ROTATE_0`, `FLANTERM_FB_ROTATE_90`, `FLANTERM_FB_ROTATE_180`, `FLANTERM_FB_ROTATE_270`. |
 | `autoflush` | Initial autoflush state. `false` also defers the initial full refresh, leaving the framebuffer as it was found until the first flush paints it. |
@@ -124,6 +124,8 @@ the dirty region -- suitable for driving CPU cache maintenance.
 
 The callback must be installed after `flanterm_fb_init` returns; the
 init-time refresh runs before any context exists to register it on.
+Installing it also invokes it once immediately, covering anything drawn
+before then.
 
 The callback must not call back into Flanterm, since anything that flushes
 would invoke it again.

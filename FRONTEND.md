@@ -28,8 +28,7 @@ Declared in `<flanterm.h>`.
 ```c
 void flanterm_write(struct flanterm_context *ctx, const char *buf, size_t count);
 ```
-Feeds `count` bytes through the parser. Flushes at the end if autoflush is on
-(the default).
+Feeds `count` bytes through the parser. Flushes at the end if autoflush is on.
 
 ```c
 void flanterm_flush(struct flanterm_context *ctx);
@@ -56,8 +55,9 @@ Returns the terminal size in character cells.
 ```c
 void flanterm_set_autoflush(struct flanterm_context *ctx, bool state);
 ```
-Enables/disables autoflush (on by default). With autoflush off, explicit
-`flanterm_flush` calls are required to commit writes.
+Enables/disables autoflush; its initial state is chosen when the backend is
+initialised. With autoflush off, explicit `flanterm_flush` calls are required
+to commit writes.
 
 ```c
 void flanterm_set_callback(

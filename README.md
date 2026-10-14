@@ -43,7 +43,7 @@ Terminal output:
 
 ```c
 const char msg[] = "Hello world\n";
-flanterm_write(ft_ctx, msg, sizeof(msg));
+flanterm_write(ft_ctx, msg, sizeof(msg) - 1);
 ```
 
 ## Documentation
