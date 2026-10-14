@@ -471,6 +471,7 @@ out:;
 
 static void save_state(struct flanterm_context *ctx);
 static void restore_state(struct flanterm_context *ctx);
+static bool execute_c0(struct flanterm_context *ctx, uint8_t c);
 
 static void dec_private_parse(struct flanterm_context *ctx, uint8_t c) {
     ctx->dec_private = false;
@@ -598,6 +599,33 @@ static bool osc_parse(struct flanterm_context *ctx, uint8_t c) {
             // escape stays true here
             return false;
         }
+    }
+    // Linux palette sequences are unterminated: ESC ] R, and ESC ] P followed
+    // by 7 hex digits. Control characters still act inside them; any other
+    // stray byte ends them and is dropped.
+    if (ctx->osc_buf_i == 0 && c == 'R') {
+        ctx->osc = false;
+        ctx->escape = false;
+        return true;
+    }
+    if (ctx->osc_buf_i != 0 && ctx->osc_buf[0] == 'P') {
+        if (c == 0x1b) {
+            ctx->osc = false;
+            ctx->escape_offset = 0;
+            return true;
+        }
+        if (c == 0x00 || c == 0x7f || execute_c0(ctx, c)) {
+            return true;
+        }
+        if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+            ctx->osc_buf[ctx->osc_buf_i++] = c;
+            if (ctx->osc_buf_i < 8) {
+                return true;
+            }
+        }
+        ctx->osc = false;
+        ctx->escape = false;
+        return true;
     }
     switch (c) {
         case 0x1b:

@@ -110,7 +110,7 @@ three are event-specific:
 | 60 | `FLANTERM_CB_KBD_LEDS`      | Keyboard LED command (`CSI q`). | LED code; 0; 0. |
 | 70 | `FLANTERM_CB_MODE`          | Unhandled ANSI set/reset (`CSI ... h`/`l`); only insert mode (`CSI 4 h`/`l`) is handled internally. | parameter count; parameter array pointer; final byte. |
 | 80 | `FLANTERM_CB_LINUX`         | Linux-console private sequence (`CSI Pn1 ; Pn2 ; ... ]`). | parameter count; parameter array pointer; 0. |
-| 90 | `FLANTERM_CB_OSC`           | Complete OSC sequence (`OSC Pt ST`/`OSC Pt BEL`) up to 256 bytes; longer ones are dropped. | parsed OSC number (digits before the first `;`, or 0 if none); payload length in bytes; payload pointer (not NUL-terminated). |
+| 90 | `FLANTERM_CB_OSC`           | Complete OSC sequence (`OSC Pt ST`/`OSC Pt BEL`) up to 256 bytes; longer ones are dropped. Linux palette sequences (`ESC ] P nrrggbb`, `ESC ] R`) are ignored. | parsed OSC number (digits before the first `;`, or 0 if none); payload length in bytes; payload pointer (not NUL-terminated). |
 
 Parameter arrays and OSC payloads are valid only for the callback's
 duration; anything that must outlive it has to be copied. Flanterm does not
