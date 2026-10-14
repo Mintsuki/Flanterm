@@ -116,3 +116,6 @@ Parameter arrays and OSC payloads are valid only for the callback's
 duration; anything that must outlive it has to be copied. Flanterm does not
 emit responses itself, so the event callback is the hook for device-attribute
 replies, LED state, OSC 52 clipboard handling, and the like.
+
+The callback runs while Flanterm is part-way through parsing input, so it
+must not call `flanterm_write` or `flanterm_deinit` on the same context.

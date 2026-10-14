@@ -125,6 +125,9 @@ the dirty region -- suitable for driving CPU cache maintenance.
 The callback must be installed after `flanterm_fb_init` returns; the
 init-time refresh runs before any context exists to register it on.
 
+The callback must not call back into Flanterm, since anything that flushes
+would invoke it again.
+
 ## Build-time configuration
 
 Macros that can be defined when compiling `fb.c`:
