@@ -109,8 +109,8 @@ struct flanterm_context {
     void (*set_text_fg_default_bright)(struct flanterm_context *);
     void (*set_text_bg_default_bright)(struct flanterm_context *);
     void (*move_character)(struct flanterm_context *, size_t new_x, size_t new_y, size_t old_x, size_t old_y);
-    void (*scroll)(struct flanterm_context *);
-    void (*revscroll)(struct flanterm_context *);
+    void (*scroll)(struct flanterm_context *, size_t count);
+    void (*revscroll)(struct flanterm_context *, size_t count);
     void (*swap_palette)(struct flanterm_context *);
     void (*save_state)(struct flanterm_context *);
     void (*restore_state)(struct flanterm_context *);

@@ -842,11 +842,12 @@ static void push_to_queue(struct flanterm_context *_ctx, struct flanterm_fb_char
     q->c = *c;
 }
 
-static void flanterm_fb_revscroll(struct flanterm_context *_ctx) {
+static void flanterm_fb_revscroll(struct flanterm_context *_ctx, size_t count) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
+    size_t shift = count * _ctx->cols;
     size_t start = _ctx->scroll_top_margin * _ctx->cols;
-    size_t end = (_ctx->scroll_bottom_margin - 1) * _ctx->cols;
+    size_t end = (_ctx->scroll_bottom_margin - count) * _ctx->cols;
     for (size_t i = end; i > start; ) {
         i--;
         struct flanterm_fb_char *c;
@@ -856,25 +857,28 @@ static void flanterm_fb_revscroll(struct flanterm_context *_ctx) {
         } else {
             c = &ctx->grid[i];
         }
-        push_to_queue(_ctx, c, (i + _ctx->cols) % _ctx->cols, (i + _ctx->cols) / _ctx->cols);
+        push_to_queue(_ctx, c, (i + shift) % _ctx->cols, (i + shift) / _ctx->cols);
     }
 
-    // Clear the first line of the screen.
+    // Clear the first count lines of the region.
     struct flanterm_fb_char empty;
     empty.c  = ' ';
     empty.fg = ctx->text_fg;
     empty.bg = ctx->text_bg;
     empty.fg_default = ctx->text_fg_default;
     empty.bg_default = ctx->text_bg_default;
-    for (size_t i = 0; i < _ctx->cols; i++) {
-        push_to_queue(_ctx, &empty, i, _ctx->scroll_top_margin);
+    for (size_t y = _ctx->scroll_top_margin; y < _ctx->scroll_top_margin + count; y++) {
+        for (size_t x = 0; x < _ctx->cols; x++) {
+            push_to_queue(_ctx, &empty, x, y);
+        }
     }
 }
 
-static void flanterm_fb_scroll(struct flanterm_context *_ctx) {
+static void flanterm_fb_scroll(struct flanterm_context *_ctx, size_t count) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
 
-    for (size_t i = (_ctx->scroll_top_margin + 1) * _ctx->cols;
+    size_t shift = count * _ctx->cols;
+    for (size_t i = (_ctx->scroll_top_margin + count) * _ctx->cols;
          i < _ctx->scroll_bottom_margin * _ctx->cols; i++) {
         struct flanterm_fb_char *c;
         struct flanterm_fb_queue_item *q = ctx->map[i];
@@ -883,18 +887,20 @@ static void flanterm_fb_scroll(struct flanterm_context *_ctx) {
         } else {
             c = &ctx->grid[i];
         }
-        push_to_queue(_ctx, c, (i - _ctx->cols) % _ctx->cols, (i - _ctx->cols) / _ctx->cols);
+        push_to_queue(_ctx, c, (i - shift) % _ctx->cols, (i - shift) / _ctx->cols);
     }
 
-    // Clear the last line of the screen.
+    // Clear the last count lines of the region.
     struct flanterm_fb_char empty;
     empty.c  = ' ';
     empty.fg = ctx->text_fg;
     empty.bg = ctx->text_bg;
     empty.fg_default = ctx->text_fg_default;
     empty.bg_default = ctx->text_bg_default;
-    for (size_t i = 0; i < _ctx->cols; i++) {
-        push_to_queue(_ctx, &empty, i, _ctx->scroll_bottom_margin - 1);
+    for (size_t y = _ctx->scroll_bottom_margin - count; y < _ctx->scroll_bottom_margin; y++) {
+        for (size_t x = 0; x < _ctx->cols; x++) {
+            push_to_queue(_ctx, &empty, x, y);
+        }
     }
 }
 
@@ -1113,7 +1119,7 @@ static void flanterm_fb_raw_putchar(struct flanterm_context *_ctx, uint8_t c) {
             ctx->cursor_y++;
             if (ctx->cursor_y == _ctx->scroll_bottom_margin) {
                 ctx->cursor_y--;
-                flanterm_fb_scroll(_ctx);
+                flanterm_fb_scroll(_ctx, 1);
             }
             if (ctx->cursor_y >= _ctx->rows) {
                 ctx->cursor_y = _ctx->rows - 1;

@@ -628,7 +628,7 @@ static bool execute_c0(struct flanterm_context *ctx, uint8_t c) {
         case '\n':
             ctx->get_cursor_pos(ctx, &x, &y);
             if (y == ctx->scroll_bottom_margin - 1) {
-                ctx->scroll(ctx);
+                ctx->scroll(ctx, 1);
                 ctx->set_cursor_pos(ctx, x, y);
             } else if (y < ctx->rows - 1) {
                 ctx->set_cursor_pos(ctx, x, y + 1);
@@ -862,9 +862,7 @@ static void control_sequence_parse(struct flanterm_context *ctx, uint8_t c) {
             ctx->scroll_top_margin = y;
             size_t max_count = ctx->scroll_bottom_margin - y;
             size_t count = ctx->esc_values[0] > max_count ? max_count : ctx->esc_values[0];
-            for (size_t i = 0; i < count; i++) {
-                ctx->scroll(ctx);
-            }
+            ctx->scroll(ctx, count);
             ctx->scroll_top_margin = old_scroll_top_margin;
             break;
         }
@@ -876,9 +874,7 @@ static void control_sequence_parse(struct flanterm_context *ctx, uint8_t c) {
             ctx->scroll_top_margin = y;
             size_t max_count = ctx->scroll_bottom_margin - y;
             size_t count = ctx->esc_values[0] > max_count ? max_count : ctx->esc_values[0];
-            for (size_t i = 0; i < count; i++) {
-                ctx->revscroll(ctx);
-            }
+            ctx->revscroll(ctx, count);
             ctx->scroll_top_margin = old_scroll_top_margin;
             break;
         }
@@ -1038,17 +1034,13 @@ static void control_sequence_parse(struct flanterm_context *ctx, uint8_t c) {
         case 'S': {
             size_t region = ctx->scroll_bottom_margin - ctx->scroll_top_margin;
             size_t count = ctx->esc_values[0] > region ? region : ctx->esc_values[0];
-            for (size_t i = 0; i < count; i++) {
-                ctx->scroll(ctx);
-            }
+            ctx->scroll(ctx, count);
             break;
         }
         case 'T': {
             size_t region = ctx->scroll_bottom_margin - ctx->scroll_top_margin;
             size_t count = ctx->esc_values[0] > region ? region : ctx->esc_values[0];
-            for (size_t i = 0; i < count; i++) {
-                ctx->revscroll(ctx);
-            }
+            ctx->revscroll(ctx, count);
             break;
         }
         case 'b': {
@@ -1177,7 +1169,7 @@ static void escape_parse(struct flanterm_context *ctx, uint8_t c) {
             break;
         case 'D':
             if (y == ctx->scroll_bottom_margin - 1) {
-                ctx->scroll(ctx);
+                ctx->scroll(ctx, 1);
                 ctx->set_cursor_pos(ctx, x, y);
             } else if (y < ctx->rows - 1) {
                 ctx->set_cursor_pos(ctx, x, y + 1);
@@ -1185,7 +1177,7 @@ static void escape_parse(struct flanterm_context *ctx, uint8_t c) {
             break;
         case 'E':
             if (y == ctx->scroll_bottom_margin - 1) {
-                ctx->scroll(ctx);
+                ctx->scroll(ctx, 1);
                 ctx->set_cursor_pos(ctx, 0, y);
             } else if (y < ctx->rows - 1) {
                 ctx->set_cursor_pos(ctx, 0, y + 1);
@@ -1196,7 +1188,7 @@ static void escape_parse(struct flanterm_context *ctx, uint8_t c) {
         case 'M':
             // "Reverse linefeed"
             if (y == ctx->scroll_top_margin) {
-                ctx->revscroll(ctx);
+                ctx->revscroll(ctx, 1);
                 ctx->set_cursor_pos(ctx, x, y);
             } else if (y > 0) {
                 ctx->set_cursor_pos(ctx, x, y - 1);
