@@ -1263,7 +1263,8 @@ struct flanterm_context *flanterm_fb_init(
         }
     }
 
-    if (red_mask_size < 8 || red_mask_size != green_mask_size || red_mask_size != blue_mask_size) {
+    // convert_colour widens 8-bit channels to at most 16 bits.
+    if (red_mask_size < 8 || red_mask_size > 16 || red_mask_size != green_mask_size || red_mask_size != blue_mask_size) {
         return NULL;
     }
 

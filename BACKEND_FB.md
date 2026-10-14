@@ -46,7 +46,7 @@ invalid framebuffer geometry, unsupported pixel format, etc.).
 | `framebuffer` | The 32-bit framebuffer, writable as `uint32_t *`. |
 | `width`, `height` | Physical framebuffer dimensions in pixels. Swapped internally for `ROTATE_90`/`ROTATE_270` (see [Rotation](#rotation)). |
 | `pitch` | Physical scanline stride in bytes. Must be a multiple of `sizeof(uint32_t)` and at least `width * 4`. |
-| `red/green/blue_mask_size` | Channel bit-widths. Each must be at least 8, and all three must match. |
+| `red/green/blue_mask_size` | Channel bit-widths. Each must be between 8 and 16, and all three must match. |
 | `red/green/blue_mask_shift` | Low bit position of each channel. `shift + size <= 32` for every channel. |
 | `canvas` | Optional background image: one `0x00RRGGBB` pixel per terminal pixel, sized `logical_width x logical_height`. `NULL` falls back to a solid `default_bg`. Forced to `NULL` under the built-in bump allocator. |
 | `ansi_colours` | Optional 8-entry base ANSI palette (`0x00RRGGBB`, order: black, red, green, brown, blue, magenta, cyan, grey). `NULL` uses the default. |
