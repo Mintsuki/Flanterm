@@ -611,7 +611,7 @@ static void plot_char_scaled_canvas(struct flanterm_context *_ctx, struct flante
 
     // naming: fx,fy for font coordinates, gx,gy for glyph coordinates
     for (size_t gy = 0; gy < ctx->glyph_height; gy++) {
-        uint8_t fy = gy / ctx->font_scale_y;
+        size_t fy = gy / ctx->font_scale_y;
         volatile uint32_t *fb_line = dest;
         uint32_t *canvas_line = ctx->canvas + x + (y + gy) * ctx->width;
         bool *glyph_pointer = glyph + (fy * ctx->font_width);
@@ -675,7 +675,7 @@ static void plot_char_scaled_uncanvas(struct flanterm_context *_ctx, struct flan
 
     // naming: fx,fy for font coordinates, gx,gy for glyph coordinates
     for (size_t gy = 0; gy < ctx->glyph_height; gy++) {
-        uint8_t fy = gy / ctx->font_scale_y;
+        size_t fy = gy / ctx->font_scale_y;
         volatile uint32_t *fb_line = dest;
         bool *glyph_pointer = glyph + (fy * ctx->font_width);
         for (size_t fx = 0; fx < ctx->font_width; fx++) {
