@@ -604,33 +604,40 @@ static void plot_char_scaled_canvas(struct flanterm_context *_ctx, struct flante
             break;
         case FLANTERM_FB_ROTATE_180:
             dest = ctx->framebuffer + (ctx->width - 1 - x) + (ctx->height - 1 - y) * (ctx->pitch / 4);
-            outer_stride = -(ctx->pitch / 4);
+            outer_stride = -(int)(ctx->pitch / 4);
             inner_stride = -1;
             break;
         case FLANTERM_FB_ROTATE_270:
             dest = ctx->framebuffer + y + (ctx->width - 1 - x) * (ctx->pitch / 4);
             outer_stride = 1;
-            inner_stride = -(ctx->pitch / 4);
+            inner_stride = -(int)(ctx->pitch / 4);
             break;
     }
 
     // naming: fx,fy for font coordinates, gx,gy for glyph coordinates
     for (size_t gy = 0; gy < ctx->glyph_height; gy++) {
         size_t fy = gy / ctx->font_scale_y;
-        volatile uint32_t *fb_line = dest;
+        volatile uint32_t *fb_line = dest + (ptrdiff_t)gy * outer_stride;
         uint32_t *canvas_line = ctx->canvas + x + (y + gy) * ctx->width;
         bool *glyph_pointer = glyph + (fy * ctx->font_width);
-        for (size_t fx = 0; fx < ctx->font_width; fx++) {
-            for (size_t i = 0; i < ctx->font_scale_x; i++) {
+        // break before stepping so fb_line stays inside the framebuffer
+        for (size_t fx = 0;;) {
+            for (size_t i = 0;;) {
                 size_t gx = ctx->font_scale_x * fx + i;
                 uint32_t bg = c->bg_default ? canvas_line[gx] : c->bg;
                 uint32_t fg = c->fg_default ? canvas_line[gx] : c->fg;
                 *fb_line = *glyph_pointer ? fg : bg;
+                if (++i == ctx->font_scale_x) {
+                    break;
+                }
                 fb_line += inner_stride;
             }
             glyph_pointer++;
+            if (++fx == ctx->font_width) {
+                break;
+            }
+            fb_line += inner_stride;
         }
-        dest += outer_stride;
     }
 }
 
@@ -668,29 +675,36 @@ static void plot_char_scaled_uncanvas(struct flanterm_context *_ctx, struct flan
             break;
         case FLANTERM_FB_ROTATE_180:
             dest = ctx->framebuffer + (ctx->width - 1 - x) + (ctx->height - 1 - y) * (ctx->pitch / 4);
-            outer_stride = -(ctx->pitch / 4);
+            outer_stride = -(int)(ctx->pitch / 4);
             inner_stride = -1;
             break;
         case FLANTERM_FB_ROTATE_270:
             dest = ctx->framebuffer + y + (ctx->width - 1 - x) * (ctx->pitch / 4);
             outer_stride = 1;
-            inner_stride = -(ctx->pitch / 4);
+            inner_stride = -(int)(ctx->pitch / 4);
             break;
     }
 
     // naming: fx,fy for font coordinates, gx,gy for glyph coordinates
     for (size_t gy = 0; gy < ctx->glyph_height; gy++) {
         size_t fy = gy / ctx->font_scale_y;
-        volatile uint32_t *fb_line = dest;
+        volatile uint32_t *fb_line = dest + (ptrdiff_t)gy * outer_stride;
         bool *glyph_pointer = glyph + (fy * ctx->font_width);
-        for (size_t fx = 0; fx < ctx->font_width; fx++) {
-            for (size_t i = 0; i < ctx->font_scale_x; i++) {
+        // break before stepping so fb_line stays inside the framebuffer
+        for (size_t fx = 0;;) {
+            for (size_t i = 0;;) {
                 *fb_line = *glyph_pointer ? fg : bg;
+                if (++i == ctx->font_scale_x) {
+                    break;
+                }
                 fb_line += inner_stride;
             }
             glyph_pointer++;
+            if (++fx == ctx->font_width) {
+                break;
+            }
+            fb_line += inner_stride;
         }
-        dest += outer_stride;
     }
 }
 
@@ -723,28 +737,31 @@ static void plot_char_unscaled_canvas(struct flanterm_context *_ctx, struct flan
             break;
         case FLANTERM_FB_ROTATE_180:
             dest = ctx->framebuffer + (ctx->width - 1 - x) + (ctx->height - 1 - y) * (ctx->pitch / 4);
-            outer_stride = -(ctx->pitch / 4);
+            outer_stride = -(int)(ctx->pitch / 4);
             inner_stride = -1;
             break;
         case FLANTERM_FB_ROTATE_270:
             dest = ctx->framebuffer + y + (ctx->width - 1 - x) * (ctx->pitch / 4);
             outer_stride = 1;
-            inner_stride = -(ctx->pitch / 4);
+            inner_stride = -(int)(ctx->pitch / 4);
             break;
     }
 
     // naming: fx,fy for font coordinates, gx,gy for glyph coordinates
     for (size_t gy = 0; gy < ctx->glyph_height; gy++) {
-        volatile uint32_t *fb_line = dest;
+        volatile uint32_t *fb_line = dest + (ptrdiff_t)gy * outer_stride;
         uint32_t *canvas_line = ctx->canvas + x + (y + gy) * ctx->width;
         bool *glyph_pointer = glyph + (gy * ctx->font_width);
-        for (size_t fx = 0; fx < ctx->font_width; fx++) {
+        // break before stepping so fb_line stays inside the framebuffer
+        for (size_t fx = 0;;) {
             uint32_t bg = c->bg_default ? canvas_line[fx] : c->bg;
             uint32_t fg = c->fg_default ? canvas_line[fx] : c->fg;
             *fb_line = *(glyph_pointer++) ? fg : bg;
+            if (++fx == ctx->font_width) {
+                break;
+            }
             fb_line += inner_stride;
         }
-        dest += outer_stride;
     }
 }
 
@@ -782,25 +799,28 @@ static void plot_char_unscaled_uncanvas(struct flanterm_context *_ctx, struct fl
             break;
         case FLANTERM_FB_ROTATE_180:
             dest = ctx->framebuffer + (ctx->width - 1 - x) + (ctx->height - 1 - y) * (ctx->pitch / 4);
-            outer_stride = -(ctx->pitch / 4);
+            outer_stride = -(int)(ctx->pitch / 4);
             inner_stride = -1;
             break;
         case FLANTERM_FB_ROTATE_270:
             dest = ctx->framebuffer + y + (ctx->width - 1 - x) * (ctx->pitch / 4);
             outer_stride = 1;
-            inner_stride = -(ctx->pitch / 4);
+            inner_stride = -(int)(ctx->pitch / 4);
             break;
     }
 
     // naming: fx,fy for font coordinates, gx,gy for glyph coordinates
     for (size_t gy = 0; gy < ctx->glyph_height; gy++) {
-        volatile uint32_t *fb_line = dest;
+        volatile uint32_t *fb_line = dest + (ptrdiff_t)gy * outer_stride;
         bool *glyph_pointer = glyph + (gy * ctx->font_width);
-        for (size_t fx = 0; fx < ctx->font_width; fx++) {
+        // break before stepping so fb_line stays inside the framebuffer
+        for (size_t fx = 0;;) {
             *fb_line = *(glyph_pointer++) ? fg : bg;
+            if (++fx == ctx->font_width) {
+                break;
+            }
             fb_line += inner_stride;
         }
-        dest += outer_stride;
     }
 }
 
