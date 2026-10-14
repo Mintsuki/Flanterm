@@ -508,8 +508,9 @@ static void dec_private_parse(struct flanterm_context *ctx, uint8_t c) {
                     save_state(ctx);
                     ctx->clear(ctx, true);
                 } else {
-                    ctx->clear(ctx, true);
+                    // There is no saved screen, so clear with the restored attributes.
                     restore_state(ctx);
+                    ctx->clear(ctx, false);
                 }
                 break;
         }
