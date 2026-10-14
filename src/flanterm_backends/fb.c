@@ -1271,6 +1271,11 @@ struct flanterm_context *flanterm_fb_init(
         return NULL;
     }
 
+    // VGA glyphs are always 8 pixels wide.
+    if (font != NULL && font_width < 8) {
+        return NULL;
+    }
+
     if (_malloc == NULL) {
 #ifndef FLANTERM_FB_DISABLE_BUMP_ALLOC
         if (bump_allocated_instance == true) {

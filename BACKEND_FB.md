@@ -54,7 +54,7 @@ invalid framebuffer geometry, unsupported pixel format, etc.).
 | `default_bg`, `default_fg` | Normal-intensity default colours (`0x00RRGGBB`). `NULL` uses black/grey. |
 | `default_bg_bright`, `default_fg_bright` | Defaults when the bold/bright flag is active. `NULL` uses dark grey/white. |
 | `font` | Optional VGA-style bitmap font (one byte per scanline, 256 consecutive glyphs). `NULL` uses the built-in 8x16 font. |
-| `font_width`, `font_height` | Glyph dimensions when `font` is non-`NULL`. See [Fonts](#fonts). |
+| `font_width`, `font_height` | Glyph dimensions when `font` is non-`NULL`. `font_width` must be at least 8. See [Fonts](#fonts). |
 | `font_spacing` | Extra pixels after each glyph; see [Fonts](#fonts). |
 | `font_scale_x`, `font_scale_y` | Integer glyph scale. `0`, `0` enables auto-scale: `2x` at logical dimensions >= 2560x1440, `4x` at >= 5120x2880. |
 | `margin` | Margin pixels on each side of the text area. `margin * 2 < logical_width` and `margin * 2 < logical_height` must hold, or init fails. |
