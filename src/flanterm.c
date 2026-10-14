@@ -139,6 +139,72 @@ void flanterm_write(struct flanterm_context *ctx, const char *buf, size_t count)
     }
 }
 
+// Reverse video swaps the base colours; bold then brightens the displayed
+// foreground and blink the displayed background.
+static void update_fg(struct flanterm_context *ctx) {
+    size_t colour = ctx->reverse_video ? ctx->current_bg : ctx->current_primary;
+
+    if (colour == (size_t)-2) {
+        // RGB/256-color; bold does not alter the colour
+        return;
+    }
+
+    if (colour != (size_t)-1) {
+        if (ctx->bold) {
+            ctx->set_text_fg_bright(ctx, colour);
+        } else {
+            ctx->set_text_fg(ctx, colour);
+        }
+        return;
+    }
+
+    if (ctx->reverse_video) {
+        ctx->swap_palette(ctx);
+        if (ctx->bold) {
+            ctx->set_text_bg_default_bright(ctx);
+        } else {
+            ctx->set_text_bg_default(ctx);
+        }
+        ctx->swap_palette(ctx);
+    } else if (ctx->bold) {
+        ctx->set_text_fg_default_bright(ctx);
+    } else {
+        ctx->set_text_fg_default(ctx);
+    }
+}
+
+static void update_bg(struct flanterm_context *ctx) {
+    size_t colour = ctx->reverse_video ? ctx->current_primary : ctx->current_bg;
+
+    if (colour == (size_t)-2) {
+        // RGB/256-color; blink does not alter the colour
+        return;
+    }
+
+    if (colour != (size_t)-1) {
+        if (ctx->bg_bold) {
+            ctx->set_text_bg_bright(ctx, colour);
+        } else {
+            ctx->set_text_bg(ctx, colour);
+        }
+        return;
+    }
+
+    if (ctx->reverse_video) {
+        ctx->swap_palette(ctx);
+        if (ctx->bg_bold) {
+            ctx->set_text_fg_default_bright(ctx);
+        } else {
+            ctx->set_text_fg_default(ctx);
+        }
+        ctx->swap_palette(ctx);
+    } else if (ctx->bg_bold) {
+        ctx->set_text_bg_default_bright(ctx);
+    } else {
+        ctx->set_text_bg_default(ctx);
+    }
+}
+
 static void sgr(struct flanterm_context *ctx) {
     size_t i = 0;
 
@@ -165,21 +231,7 @@ def:
 
         else if (ctx->esc_values[i] == 1) {
             ctx->bold = true;
-            if (ctx->current_primary == (size_t)-2) {
-                // RGB/256-color; bold does not alter the colour
-            } else if (ctx->current_primary != (size_t)-1) {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_fg_bright(ctx, ctx->current_primary);
-                } else {
-                    ctx->set_text_bg_bright(ctx, ctx->current_primary);
-                }
-            } else {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_fg_default_bright(ctx);
-                } else {
-                    ctx->set_text_bg_default_bright(ctx);
-                }
-            }
+            update_fg(ctx);
             continue;
         }
 
@@ -192,41 +244,13 @@ def:
 
         else if (ctx->esc_values[i] == 5) {
             ctx->bg_bold = true;
-            if (ctx->current_bg == (size_t)-2) {
-                // RGB/256-color; bold does not alter the colour
-            } else if (ctx->current_bg != (size_t)-1) {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_bg_bright(ctx, ctx->current_bg);
-                } else {
-                    ctx->set_text_fg_bright(ctx, ctx->current_bg);
-                }
-            } else {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_bg_default_bright(ctx);
-                } else {
-                    ctx->set_text_fg_default_bright(ctx);
-                }
-            }
+            update_bg(ctx);
             continue;
         }
 
         else if (ctx->esc_values[i] == 22) {
             ctx->bold = false;
-            if (ctx->current_primary == (size_t)-2) {
-                // RGB/256-color; unbold does not alter the colour
-            } else if (ctx->current_primary != (size_t)-1) {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_fg(ctx, ctx->current_primary);
-                } else {
-                    ctx->set_text_bg(ctx, ctx->current_primary);
-                }
-            } else {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_fg_default(ctx);
-                } else {
-                    ctx->set_text_bg_default(ctx);
-                }
-            }
+            update_fg(ctx);
             continue;
         }
 
@@ -238,21 +262,7 @@ def:
 
         else if (ctx->esc_values[i] == 25) {
             ctx->bg_bold = false;
-            if (ctx->current_bg == (size_t)-2) {
-                // RGB/256-color; unbold does not alter the colour
-            } else if (ctx->current_bg != (size_t)-1) {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_bg(ctx, ctx->current_bg);
-                } else {
-                    ctx->set_text_fg(ctx, ctx->current_bg);
-                }
-            } else {
-                if (!ctx->reverse_video) {
-                    ctx->set_text_bg_default(ctx);
-                } else {
-                    ctx->set_text_fg_default(ctx);
-                }
-            }
+            update_bg(ctx);
             continue;
         }
 
@@ -265,8 +275,7 @@ def:
             }
 
 set_fg:
-            if ((ctx->bold && !ctx->reverse_video)
-             || (ctx->bg_bold && ctx->reverse_video)) {
+            if (ctx->bold) {
                 ctx->set_text_fg_bright(ctx, ctx->esc_values[i] - offset);
             } else {
                 ctx->set_text_fg(ctx, ctx->esc_values[i] - offset);
@@ -283,8 +292,7 @@ set_fg:
             }
 
 set_bg:
-            if ((ctx->bold && ctx->reverse_video)
-             || (ctx->bg_bold && !ctx->reverse_video)) {
+            if (ctx->bg_bold) {
                 ctx->set_text_bg_bright(ctx, ctx->esc_values[i] - offset);
             } else {
                 ctx->set_text_bg(ctx, ctx->esc_values[i] - offset);
@@ -325,7 +333,7 @@ set_bg_bright:
                 ctx->swap_palette(ctx);
             }
 
-            if (!ctx->bold) {
+            if (!(ctx->reverse_video ? ctx->bg_bold : ctx->bold)) {
                 ctx->set_text_fg_default(ctx);
             } else {
                 ctx->set_text_fg_default_bright(ctx);
@@ -345,7 +353,7 @@ set_bg_bright:
                 ctx->swap_palette(ctx);
             }
 
-            if (!ctx->bg_bold) {
+            if (!(ctx->reverse_video ? ctx->bold : ctx->bg_bold)) {
                 ctx->set_text_bg_default(ctx);
             } else {
                 ctx->set_text_bg_default_bright(ctx);
@@ -362,6 +370,12 @@ set_bg_bright:
             if (!ctx->reverse_video) {
                 ctx->reverse_video = true;
                 ctx->swap_palette(ctx);
+                // The swap carries each colour's brightness across, which is
+                // only wrong when bold and blink differ.
+                if (ctx->bold != ctx->bg_bold) {
+                    update_fg(ctx);
+                    update_bg(ctx);
+                }
             }
             continue;
         }
@@ -370,6 +384,10 @@ set_bg_bright:
             if (ctx->reverse_video) {
                 ctx->reverse_video = false;
                 ctx->swap_palette(ctx);
+                if (ctx->bold != ctx->bg_bold) {
+                    update_fg(ctx);
+                    update_bg(ctx);
+                }
             }
             continue;
         }
@@ -2228,7 +2246,7 @@ void flanterm_reset_text_fg(struct flanterm_context *ctx) {
         ctx->swap_palette(ctx);
     }
 
-    if (!ctx->bold) {
+    if (!(ctx->reverse_video ? ctx->bg_bold : ctx->bold)) {
         ctx->set_text_fg_default(ctx);
     } else {
         ctx->set_text_fg_default_bright(ctx);
@@ -2250,7 +2268,7 @@ void flanterm_reset_text_bg(struct flanterm_context *ctx) {
         ctx->swap_palette(ctx);
     }
 
-    if (!ctx->bg_bold) {
+    if (!(ctx->reverse_video ? ctx->bold : ctx->bg_bold)) {
         ctx->set_text_bg_default(ctx);
     } else {
         ctx->set_text_bg_default_bright(ctx);
