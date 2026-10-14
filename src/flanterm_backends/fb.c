@@ -1100,7 +1100,7 @@ static void flanterm_fb_double_buffer_flush(struct flanterm_context *_ctx) {
     ctx->queue_i = 0;
 
     if (ctx->flush_callback) {
-        ctx->flush_callback(ctx->framebuffer, ctx->pitch * ctx->phys_height);
+        ctx->flush_callback(ctx->phys_framebuffer, ctx->pitch * ctx->phys_height);
     }
 }
 
@@ -1178,7 +1178,7 @@ static void flanterm_fb_full_refresh(struct flanterm_context *_ctx) {
     }
 
     if (ctx->flush_callback) {
-        ctx->flush_callback(ctx->framebuffer, ctx->pitch * ctx->phys_height);
+        ctx->flush_callback(ctx->phys_framebuffer, ctx->pitch * ctx->phys_height);
     }
 }
 
@@ -1226,6 +1226,7 @@ struct flanterm_context *flanterm_fb_init(
     int rotation,
     bool autoflush
 ) {
+    uint32_t *phys_framebuffer = framebuffer;
     size_t phys_height = height;
 
     // The framebuffer is written a 32-bit word at a time, so the stride must be
@@ -1303,15 +1304,6 @@ struct flanterm_context *flanterm_fb_init(
 
             width = width_limit;
             height = height_limit;
-
-            // phys_height must reflect the physical row count for flush_callback.
-            // For ROTATE_0/180, logical height = physical rows.
-            // For ROTATE_90/270, logical width = physical rows.
-            if (rotation == FLANTERM_FB_ROTATE_90 || rotation == FLANTERM_FB_ROTATE_270) {
-                phys_height = width;
-            } else {
-                phys_height = height;
-            }
         }
 
         // Force disable canvas
@@ -1402,6 +1394,7 @@ struct flanterm_context *flanterm_fb_init(
     ctx->rotation = rotation;
 
     ctx->framebuffer = (void *)framebuffer;
+    ctx->phys_framebuffer = (void *)phys_framebuffer;
     ctx->width = width;
     ctx->height = height;
     ctx->phys_height = phys_height;
@@ -1658,6 +1651,6 @@ void flanterm_fb_set_flush_callback(struct flanterm_context *_ctx, void (*flush_
     struct flanterm_fb_context *ctx = (void *)_ctx;
     ctx->flush_callback = flush_callback;
     if (flush_callback != NULL) {
-        flush_callback(ctx->framebuffer, ctx->pitch * ctx->phys_height);
+        flush_callback(ctx->phys_framebuffer, ctx->pitch * ctx->phys_height);
     }
 }
