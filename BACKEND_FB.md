@@ -12,6 +12,7 @@ Add `flanterm_backends/fb.c` to the build and include
 - [Rotation](#rotation)
 - [Fonts](#fonts)
 - [Allocator and the built-in bump allocator](#allocator-and-the-built-in-bump-allocator)
+- [Moving the framebuffer](#moving-the-framebuffer)
 - [Flush callback](#flush-callback)
 - [Build-time configuration](#build-time-configuration)
 
@@ -106,6 +107,20 @@ mode:
 With a custom allocator, `_malloc` is used for every allocation and the
 paired `_free` runs when freeing. `_free` receives the allocation
 size as its second argument.
+
+## Moving the framebuffer
+
+```c
+void flanterm_fb_set_framebuffer(struct flanterm_context *ctx, uint32_t *framebuffer);
+```
+
+Points the context at a framebuffer at a new address, for example where the
+display's memory has been moved to another address. The new framebuffer must
+have the geometry and pixel format the context was initialised with. Nothing
+is painted: what is already there stays, and `flanterm_full_refresh` repaints
+the terminal if the new framebuffer does not hold it.
+
+The call must not run while the context draws.
 
 ## Flush callback
 

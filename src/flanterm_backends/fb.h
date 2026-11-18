@@ -72,6 +72,9 @@ struct flanterm_context *flanterm_fb_init(
     bool autoflush
 );
 
+/* Same geometry and pixel format; paints nothing. */
+void flanterm_fb_set_framebuffer(struct flanterm_context *ctx, uint32_t *framebuffer);
+
 void flanterm_fb_set_flush_callback(struct flanterm_context *ctx, void (*flush_callback)(volatile void *address, size_t length));
 
 #ifdef __cplusplus

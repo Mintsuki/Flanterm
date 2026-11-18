@@ -1696,6 +1696,14 @@ fail:
     return NULL;
 }
 
+void flanterm_fb_set_framebuffer(struct flanterm_context *_ctx, uint32_t *framebuffer) {
+    struct flanterm_fb_context *ctx = (void *)_ctx;
+    // Keep the offset of a clipped, centred terminal area.
+    uintptr_t offset = (uintptr_t)ctx->framebuffer - (uintptr_t)ctx->phys_framebuffer;
+    ctx->phys_framebuffer = (void *)framebuffer;
+    ctx->framebuffer = (void *)((uintptr_t)framebuffer + offset);
+}
+
 void flanterm_fb_set_flush_callback(struct flanterm_context *_ctx, void (*flush_callback)(volatile void *address, size_t length)) {
     struct flanterm_fb_context *ctx = (void *)_ctx;
     ctx->flush_callback = flush_callback;
